@@ -1,3 +1,4 @@
+# file_processor.py
 """
 File Processor - Handles recursive file discovery and output management
 """

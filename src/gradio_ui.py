@@ -1,3 +1,4 @@
+# gradio_ui.py
 """
 Gradio UI for GutenOCR Application
 """

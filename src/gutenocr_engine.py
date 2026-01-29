@@ -1,3 +1,4 @@
+# gutenocr_engine.py
 """
 GutenOCR Engine - Core OCR processing with CPU/GPU support
 """

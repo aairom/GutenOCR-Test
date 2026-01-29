@@ -1,3 +1,4 @@
+# docling_gradio_ui.py
 """
 Docling + GutenOCR Combined Gradio UI
 A dedicated web interface for combined document processing

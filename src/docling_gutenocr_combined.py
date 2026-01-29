@@ -1,3 +1,4 @@
+# docling_gutenocr_combined.py
 """
 Combined Docling + GutenOCR Application
 Integrates Docling's document processing with GutenOCR's OCR capabilities
