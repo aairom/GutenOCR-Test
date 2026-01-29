@@ -29,18 +29,27 @@ pip install -r requirements.txt
 
 2. **Start Application**
 ```bash
-# Gradio UI
+# Standard Gradio UI (OCR only)
 ./scripts/start.sh --mode gradio
+
+# Docling + GutenOCR UI (NEW! - Advanced document processing)
+./scripts/start.sh --mode docling-ui
 
 # With CPU only
 ./scripts/start.sh --mode gradio --cpu
+./scripts/start.sh --mode docling-ui --cpu
 
 # With 7B model
 ./scripts/start.sh --mode gradio --model 7B
+./scripts/start.sh --mode docling-ui --model 7B
 
-# Combined processor
+# Combined processor (CLI)
 ./scripts/start.sh --mode combined
 ```
+
+**Application URLs:**
+- Standard UI: `http://localhost:7860`
+- Docling + GutenOCR UI: `http://localhost:7861`
 
 3. **Stop Application**
 ```bash
@@ -75,7 +84,8 @@ docker run -d \
 
 3. **Access Application**
 ```
-http://localhost:7860
+Standard UI: http://localhost:7860
+Docling UI: http://localhost:7861 (if using combined image)
 ```
 
 4. **View Logs**

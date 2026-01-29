@@ -57,7 +57,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: ./scripts/start.sh [OPTIONS]"
             echo ""
             echo "Options:"
-            echo "  --mode MODE       Application mode: gradio, combined, docker-cpu, docker-gpu, k8s"
+            echo "  --mode MODE       Application mode: gradio, docling-ui, combined, docker-cpu, docker-gpu, k8s"
             echo "  --cpu             Force CPU usage (for gradio and combined modes)"
             echo "  --model MODEL     Model size: 3B or 7B (default: 3B)"
             echo "  --help            Show this help message"
@@ -73,7 +73,10 @@ done
 
 # Create necessary directories
 print_info "Creating directories..."
-mkdir -p input output
+mkdir -p input output logs
+
+# Generate timestamp for log files
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 case $MODE in
     gradio)
@@ -108,8 +111,76 @@ case $MODE in
             print_info "Running on GPU (if available)"
         fi
         
+        # Create log file
+        LOG_FILE="./output/gradio_ui_${TIMESTAMP}.log"
+        PID_FILE="./output/gradio_ui.pid"
+        
         print_info "Starting Gradio UI on http://localhost:7860"
-        python src/gradio_ui.py
+        print_info "Logs: $LOG_FILE"
+        
+        # Start in background and save PID
+        nohup python src/gradio_ui.py > "$LOG_FILE" 2>&1 &
+        echo $! > "$PID_FILE"
+        
+        print_info "Process started with PID: $(cat $PID_FILE)"
+        print_info "Waiting for startup..."
+        sleep 3
+        
+        # Tail the log file
+        print_info "Tailing logs (Ctrl+C to stop viewing, app continues running)..."
+        tail -f "$LOG_FILE"
+        ;;
+    
+    docling-ui)
+        print_info "Starting Docling + GutenOCR Combined UI..."
+        
+        # Check if virtual environment exists
+        if [ ! -d "venv" ]; then
+            print_warning "Virtual environment not found. Creating one..."
+            python3 -m venv venv
+        fi
+        
+        # Activate virtual environment
+        source venv/bin/activate
+        
+        # Install dependencies
+        print_info "Installing dependencies..."
+        pip install -q --upgrade pip
+        pip install -q -r requirements.txt
+        
+        # Set model
+        if [ "$MODEL" = "7B" ]; then
+            export GUTENOCR_MODEL="rootsautomation/GutenOCR-7B"
+        else
+            export GUTENOCR_MODEL="rootsautomation/GutenOCR-3B"
+        fi
+        
+        # Set CPU flag
+        if [ "$USE_CPU" = true ]; then
+            export GUTENOCR_USE_CPU="true"
+            print_info "Running on CPU"
+        else
+            print_info "Running on GPU (if available)"
+        fi
+        
+        # Create log file
+        LOG_FILE="./output/docling_ui_${TIMESTAMP}.log"
+        PID_FILE="./output/docling_ui.pid"
+        
+        print_info "Starting Docling + GutenOCR UI on http://localhost:7861"
+        print_info "Logs: $LOG_FILE"
+        
+        # Start in background and save PID
+        nohup python src/docling_gradio_ui.py > "$LOG_FILE" 2>&1 &
+        echo $! > "$PID_FILE"
+        
+        print_info "Process started with PID: $(cat $PID_FILE)"
+        print_info "Waiting for startup..."
+        sleep 3
+        
+        # Tail the log file
+        print_info "Tailing logs (Ctrl+C to stop viewing, app continues running)..."
+        tail -f "$LOG_FILE"
         ;;
     
     combined)

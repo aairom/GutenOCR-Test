@@ -8,9 +8,10 @@ This document contains detailed Mermaid flow charts for the GutenOCR application
 2. [Single Image Processing Flow](#single-image-processing-flow)
 3. [Batch Processing Flow](#batch-processing-flow)
 4. [Combined Docling + GutenOCR Flow](#combined-docling--gutenocr-flow)
-5. [Docker Deployment Flow](#docker-deployment-flow)
-6. [Kubernetes Deployment Flow](#kubernetes-deployment-flow)
-7. [Error Handling Flow](#error-handling-flow)
+5. [Docling UI Processing Flow](#docling-ui-processing-flow) **NEW!**
+6. [Docker Deployment Flow](#docker-deployment-flow)
+7. [Kubernetes Deployment Flow](#kubernetes-deployment-flow)
+8. [Error Handling Flow](#error-handling-flow)
 
 ## Application Startup Flow
 
@@ -18,13 +19,16 @@ This document contains detailed Mermaid flow charts for the GutenOCR application
 flowchart TD
     Start([Start Application]) --> CheckMode{Check Mode}
     
-    CheckMode -->|Gradio| InitGradio[Initialize Gradio UI]
+    CheckMode -->|Gradio| InitGradio[Initialize Standard UI]
+    CheckMode -->|Docling-UI| InitDoclingUI[Initialize Docling UI]
     CheckMode -->|Combined| InitCombined[Initialize Combined Processor]
     CheckMode -->|Docker| InitDocker[Initialize Docker Container]
     CheckMode -->|K8s| InitK8s[Initialize Kubernetes Pod]
     
-    InitGradio --> LoadUI[Load Web Interface]
+    InitGradio --> LoadUI[Load Web Interface<br/>Port 7860]
+    InitDoclingUI --> LoadDoclingUI[Load Docling UI<br/>Port 7861]
     LoadUI --> WaitUser[Wait for User Input]
+    LoadDoclingUI --> WaitDoclingUser[Wait for User Input]
     
     WaitUser --> UserAction{User Action}
     UserAction -->|Initialize Model| LoadModel[Load GutenOCR Model]
@@ -200,6 +204,115 @@ flowchart TD
     CombineText --> FormatOutput[Format Combined Output]
     FormatOutput --> SaveCombined[Save Combined Results]
     SaveCombined --> End
+```
+
+## Docling UI Processing Flow
+
+```mermaid
+flowchart TD
+    Start([User Opens Docling UI]) --> SetupTab{Setup Tab}
+    
+    SetupTab --> SelectModel[Select Model 3B/7B]
+    SelectModel --> SelectDevice[Select CPU/GPU]
+    SelectDevice --> EnableDocling[Enable/Disable Docling]
+    EnableDocling --> InitProcessor[Initialize Processor]
+    
+    InitProcessor --> CheckInit{Initialization Success?}
+    
+    CheckInit -->|No| ShowError[Show Error Message]
+    CheckInit -->|Yes| ShowCapabilities[Show Capabilities]
+    
+    ShowError --> End([End])
+    
+    ShowCapabilities --> DisplayInfo[Display Device Info<br/>Supported Formats<br/>Processing Modes]
+    DisplayInfo --> WaitAction{User Action}
+    
+    WaitAction -->|Single Document| SingleDoc[Single Document Tab]
+    WaitAction -->|Batch Process| BatchDoc[Batch Processing Tab]
+    WaitAction -->|View Help| HelpTab[Help Tab]
+    
+    SingleDoc --> UploadDoc[Upload Document]
+    UploadDoc --> ValidateDoc{Valid Format?}
+    
+    ValidateDoc -->|No| ErrorFormat[Error: Unsupported Format]
+    ValidateDoc -->|Yes| SelectOptions[Select Processing Options]
+    
+    ErrorFormat --> End
+    
+    SelectOptions --> ExtractStructOpt[Extract Structure?]
+    ExtractStructOpt --> ExtractTablesOpt[Extract Tables?]
+    ExtractTablesOpt --> PerformOCROpt[Perform OCR?]
+    
+    PerformOCROpt --> ProcessDoc[Process Document]
+    
+    ProcessDoc --> CheckDocling{Docling Enabled?}
+    
+    CheckDocling -->|Yes| ProcessWithDocling[Process with Docling]
+    CheckDocling -->|No| SkipDocling[Skip Docling]
+    
+    ProcessWithDocling --> ExtractStruct{Extract Structure?}
+    
+    ExtractStruct -->|Yes| GetStructure[Get Document Structure]
+    ExtractStruct -->|No| SkipStruct[Skip Structure]
+    
+    GetStructure --> ExtractTabs{Extract Tables?}
+    SkipStruct --> ExtractTabs
+    
+    ExtractTabs -->|Yes| GetTables[Get Tables]
+    ExtractTabs -->|No| SkipTables[Skip Tables]
+    
+    GetTables --> DoclingComplete[Docling Complete]
+    SkipTables --> DoclingComplete
+    SkipDocling --> DoclingComplete
+    
+    DoclingComplete --> CheckOCR{Perform OCR?}
+    
+    CheckOCR -->|Yes| ProcessOCR[Process with GutenOCR]
+    CheckOCR -->|No| SkipOCR[Skip OCR]
+    
+    ProcessOCR --> ExtractText[Extract Text]
+    ExtractText --> OCRComplete[OCR Complete]
+    SkipOCR --> OCRComplete
+    
+    OCRComplete --> MergeResults[Merge Results]
+    MergeResults --> DetermineMode[Determine Processing Mode]
+    
+    DetermineMode --> FormatOutput[Format Output]
+    FormatOutput --> SaveJSON[Save JSON Result]
+    SaveJSON --> DisplayResults[Display Extracted Content]
+    
+    DisplayResults --> ShowMetadata[Show Metadata<br/>Processing Mode<br/>File Path<br/>Timestamp]
+    ShowMetadata --> OfferDownload[Offer Download]
+    OfferDownload --> End
+    
+    BatchDoc --> CheckInputDir{Input Dir Has Files?}
+    
+    CheckInputDir -->|No| ErrorNoFiles[Error: No Files Found]
+    CheckInputDir -->|Yes| SelectBatchOptions[Select Batch Options]
+    
+    ErrorNoFiles --> End
+    
+    SelectBatchOptions --> StartBatch[Start Batch Processing]
+    StartBatch --> InitBatchProgress[Initialize Progress]
+    
+    InitBatchProgress --> BatchLoop{More Files?}
+    
+    BatchLoop -->|No| BatchComplete[Batch Complete]
+    BatchLoop -->|Yes| ProcessNextFile[Process Next File]
+    
+    ProcessNextFile --> UpdateBatchProgress[Update Progress]
+    UpdateBatchProgress --> ProcessFileDoc[Process Document]
+    ProcessFileDoc --> AddToResults[Add to Results]
+    AddToResults --> BatchLoop
+    
+    BatchComplete --> GenerateSummary[Generate Summary]
+    GenerateSummary --> SaveBatchResults[Save Batch Results]
+    SaveBatchResults --> DisplaySummary[Display Summary<br/>Total Files<br/>Successful<br/>Failed<br/>Processing Modes]
+    DisplaySummary --> End
+    
+    HelpTab --> ShowHelp[Show Comprehensive Help]
+    ShowHelp --> DisplayGuide[Display Usage Guide<br/>Supported Formats<br/>Processing Modes<br/>Tips & Troubleshooting]
+    DisplayGuide --> End
 ```
 
 ## Docker Deployment Flow

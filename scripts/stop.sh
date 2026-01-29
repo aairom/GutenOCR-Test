@@ -120,14 +120,49 @@ stop_k8s() {
 stop_local() {
     print_info "Stopping local processes..."
     
-    # Find and kill Python processes running GutenOCR
-    PIDS=$(ps aux | grep -E "python.*gradio_ui.py|python.*docling_gutenocr_combined.py" | grep -v grep | awk '{print $2}')
+    # Stop processes using PID files
+    STOPPED=false
     
-    if [ -z "$PIDS" ]; then
-        print_info "No local GutenOCR processes found"
-    else
+    # Stop Gradio UI
+    if [ -f "./output/gradio_ui.pid" ]; then
+        PID=$(cat ./output/gradio_ui.pid)
+        if ps -p $PID > /dev/null 2>&1; then
+            print_info "Stopping Gradio UI (PID: $PID)..."
+            kill -15 $PID 2>/dev/null || true
+            sleep 2
+            # Force kill if still running
+            if ps -p $PID > /dev/null 2>&1; then
+                print_warning "Force killing Gradio UI (PID: $PID)..."
+                kill -9 $PID 2>/dev/null || true
+            fi
+            STOPPED=true
+        fi
+        rm -f ./output/gradio_ui.pid
+    fi
+    
+    # Stop Docling UI
+    if [ -f "./output/docling_ui.pid" ]; then
+        PID=$(cat ./output/docling_ui.pid)
+        if ps -p $PID > /dev/null 2>&1; then
+            print_info "Stopping Docling UI (PID: $PID)..."
+            kill -15 $PID 2>/dev/null || true
+            sleep 2
+            # Force kill if still running
+            if ps -p $PID > /dev/null 2>&1; then
+                print_warning "Force killing Docling UI (PID: $PID)..."
+                kill -9 $PID 2>/dev/null || true
+            fi
+            STOPPED=true
+        fi
+        rm -f ./output/docling_ui.pid
+    fi
+    
+    # Fallback: Find and kill any remaining Python processes running GutenOCR
+    PIDS=$(ps aux | grep -E "python.*gradio_ui.py|python.*docling_gradio_ui.py|python.*docling_gutenocr_combined.py" | grep -v grep | awk '{print $2}')
+    
+    if [ -n "$PIDS" ]; then
         for PID in $PIDS; do
-            print_info "Stopping process $PID..."
+            print_info "Stopping remaining process $PID..."
             kill -15 $PID 2>/dev/null || true
             sleep 2
             # Force kill if still running
@@ -135,8 +170,14 @@ stop_local() {
                 print_warning "Force killing process $PID..."
                 kill -9 $PID 2>/dev/null || true
             fi
+            STOPPED=true
         done
+    fi
+    
+    if [ "$STOPPED" = true ]; then
         print_info "Local processes stopped"
+    else
+        print_info "No local GutenOCR processes found"
     fi
 }
 

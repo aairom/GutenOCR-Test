@@ -11,11 +11,15 @@ A comprehensive OCR application powered by GutenOCR Vision Language Models with 
 
 - **Multiple Models**: Support for GutenOCR-3B (faster) and GutenOCR-7B (more accurate)
 - **CPU/GPU Support**: Works on both CPU and GPU (GPU recommended for speed)
-- **User-Friendly UI**: Gradio-based web interface for easy interaction
+- **Dual Web Interfaces**:
+  - Standard GutenOCR UI for OCR tasks
+  - Dedicated Docling + GutenOCR UI for advanced document processing
 - **Batch Processing**: Process entire directories recursively
 - **Combined Processing**: Integration with Docling for enhanced document processing
+- **Document Structure Extraction**: Extract tables, layouts, and document structure
 - **Flexible Tasks**: Reading, detection, localized reading, conditional detection
 - **Multiple Output Formats**: TEXT, TEXT2D, LINES, WORDS, PARAGRAPHS, LATEX, BOX
+- **Multi-Format Support**: PDF, DOCX, PPTX, images, HTML, Markdown
 - **Timestamped Output**: All results saved with timestamps
 - **Docker Support**: Ready-to-use Docker containers for CPU and GPU
 - **Kubernetes Ready**: Complete K8s deployment configurations
@@ -66,23 +70,39 @@ pip install -r requirements.txt
 
 ## 🎯 Quick Start
 
-### Option 1: Gradio UI (Recommended)
+### Option 1: Standard GutenOCR UI
 
-Start the web interface:
+Start the standard OCR web interface:
 ```bash
 ./scripts/start.sh --mode gradio
 ```
 
 Access the UI at: `http://localhost:7860`
 
-### Option 2: Command Line (Combined Processor)
+### Option 2: Docling + GutenOCR UI (NEW! 🎉)
 
-Process images directly:
+Start the advanced document processing interface:
+```bash
+./scripts/start.sh --mode docling-ui
+```
+
+Access the UI at: `http://localhost:7861`
+
+**Features:**
+- Document structure extraction with Docling
+- Table detection and extraction
+- High-quality OCR with GutenOCR
+- Support for PDF, DOCX, PPTX, and images
+- Combined processing modes
+
+### Option 3: Command Line (Combined Processor)
+
+Process documents directly:
 ```bash
 ./scripts/start.sh --mode combined
 ```
 
-### Option 3: Docker
+### Option 4: Docker
 
 Start with Docker (CPU):
 ```bash
@@ -96,7 +116,9 @@ Start with Docker (GPU):
 
 ## 📖 Usage
 
-### Gradio Web Interface
+### Standard GutenOCR UI
+
+**Purpose:** Fast OCR processing for images
 
 1. **Setup Tab**: Initialize the model
    - Select model (3B or 7B)
@@ -113,6 +135,47 @@ Start with Docker (GPU):
    - Select processing options
    - Click "Start Batch Processing"
    - Results saved to `./output` directory
+
+### Docling + GutenOCR Combined UI (NEW!)
+
+**Purpose:** Advanced document processing with structure extraction
+
+**Access:** `http://localhost:7861`
+
+1. **Setup Tab**: Initialize the combined processor
+   - Select model (3B or 7B)
+   - Choose CPU or GPU
+   - Enable/disable Docling integration
+   - Click "Initialize Processor"
+   - View processor capabilities
+
+2. **Single Document Tab**: Process individual documents
+   - Upload a document (PDF, DOCX, PPTX, or image)
+   - Configure processing options:
+     - **Extract Structure**: Use Docling to extract document structure
+     - **Extract Tables**: Detect and extract tables from documents
+     - **Perform OCR**: Use GutenOCR for text extraction
+   - Click "Process Document"
+   - View extracted content and download results
+
+3. **Batch Processing Tab**: Process multiple documents
+   - Place documents in `./input` directory
+   - Configure processing options
+   - Click "Start Batch Processing"
+   - View processing summary
+   - Results saved to `./output` directory with detailed JSON
+
+4. **Help Tab**: Comprehensive usage guide and troubleshooting
+
+**Supported Formats:**
+- PDF, DOCX, PPTX (with Docling)
+- PNG, JPG, JPEG, TIFF, BMP, GIF, WEBP (images)
+- HTML, Markdown (with Docling)
+
+**Processing Modes:**
+- **Combined**: Uses both Docling (structure) and GutenOCR (OCR)
+- **Docling Only**: Structure extraction without OCR
+- **GutenOCR Only**: OCR without structure extraction
 
 ### Command Line Interface
 
@@ -152,12 +215,44 @@ results = engine.batch_process(images)
 processor.save_results(results, format="json")
 ```
 
-#### Combined Docling + GutenOCR
+#### Combined Docling + GutenOCR (CLI)
 ```bash
+# Command line processing
 python src/docling_gutenocr_combined.py \
     --input ./input \
     --output ./output \
     --model rootsautomation/GutenOCR-3B
+
+# Or use the start script
+./scripts/start.sh --mode combined
+```
+
+#### Combined Docling + GutenOCR (Python API)
+```python
+from src.docling_gutenocr_combined import DoclingGutenOCRProcessor
+
+# Initialize processor
+processor = DoclingGutenOCRProcessor(
+    gutenocr_model="rootsautomation/GutenOCR-3B",
+    use_cpu=False,
+    use_docling=True
+)
+
+# Process single document
+result = processor.process_document(
+    file_path="document.pdf",
+    extract_structure=True,
+    extract_tables=True,
+    ocr_images=True
+)
+
+print(result['combined_text'])
+
+# Batch process
+results = processor.batch_process(
+    input_dir="./input",
+    output_dir="./output"
+)
 ```
 
 ## 🏗️ Architecture
@@ -169,7 +264,8 @@ GutenOCR-Test/
 ├── src/
 │   ├── gutenocr_engine.py          # Core OCR engine
 │   ├── file_processor.py           # File handling and output management
-│   ├── gradio_ui.py                # Web interface
+│   ├── gradio_ui.py                # Standard OCR web interface
+│   ├── docling_gradio_ui.py        # Docling + GutenOCR web interface (NEW!)
 │   └── docling_gutenocr_combined.py # Combined processor
 ├── docker/
 │   ├── Dockerfile.gutenocr         # CPU Docker image

@@ -9,7 +9,8 @@ This document describes the architecture of the GutenOCR application, including 
 ```mermaid
 graph TB
     subgraph "User Interface Layer"
-        UI[Gradio Web UI]
+        UI1[Standard Gradio UI<br/>Port 7860]
+        UI2[Docling + GutenOCR UI<br/>Port 7861]
         CLI[Command Line Interface]
     end
     
@@ -36,7 +37,8 @@ graph TB
         K8s[Kubernetes Cluster]
     end
     
-    UI --> Engine
+    UI1 --> Engine
+    UI2 --> Combined
     CLI --> Engine
     CLI --> Combined
     
@@ -110,9 +112,11 @@ graph TB
 - create_summary_report(results, statistics)
 ```
 
-### 3. Gradio UI (`gradio_ui.py`)
+### 3. Standard Gradio UI (`gradio_ui.py`)
 
-**Purpose**: Web-based user interface
+**Purpose**: Web-based user interface for standard OCR tasks
+
+**Port**: 7860
 
 **Key Features**:
 - Model initialization interface
@@ -127,9 +131,39 @@ graph TB
 3. Batch Processing: Directory-based processing
 4. Info: Documentation and help
 
+### 3.5. Docling + GutenOCR UI (`docling_gradio_ui.py`) **NEW!**
+
+**Purpose**: Advanced document processing interface combining Docling and GutenOCR
+
+**Port**: 7861
+
+**Key Features**:
+- Combined processor initialization
+- Document structure extraction
+- Table detection and extraction
+- Multi-format support (PDF, DOCX, PPTX, images)
+- Processing mode selection
+- Comprehensive help system
+
+**Tabs**:
+1. Setup: Processor configuration and capabilities
+2. Single Document: Individual document processing with options
+3. Batch Processing: Directory-based document processing
+4. Help: Comprehensive usage guide and troubleshooting
+
+**Processing Options**:
+- Extract Structure: Use Docling for document structure
+- Extract Tables: Detect and extract tables
+- Perform OCR: Use GutenOCR for text extraction
+
+**Processing Modes**:
+- Combined: Both Docling and GutenOCR
+- Docling Only: Structure extraction without OCR
+- GutenOCR Only: OCR without structure extraction
+
 ### 4. Combined Processor (`docling_gutenocr_combined.py`)
 
-**Purpose**: Integration of Docling and GutenOCR
+**Purpose**: Backend integration of Docling and GutenOCR
 
 **Key Features**:
 - Document structure extraction (Docling)
@@ -137,16 +171,30 @@ graph TB
 - Table extraction
 - Result merging
 - Batch processing
+- Multi-format support
+
+**Supported Formats**:
+- PDF, DOCX, PPTX (with Docling)
+- PNG, JPG, JPEG, TIFF, BMP, GIF, WEBP (images)
+- HTML, Markdown (with Docling)
 
 **Processing Pipeline**:
-1. Extract document structure with Docling
-2. Perform OCR with GutenOCR
-3. Merge results
-4. Save combined output
+1. Extract document structure with Docling (optional)
+2. Perform OCR with GutenOCR (optional)
+3. Merge results intelligently
+4. Save combined output with metadata
+
+**Key Methods**:
+```python
+- __init__(gutenocr_model, use_cpu, use_docling)
+- process_document(file_path, extract_structure, extract_tables, ocr_images)
+- batch_process(input_dir, output_dir, extract_structure, extract_tables, ocr_images)
+- get_capabilities()
+```
 
 ## Data Flow
 
-### Single Image Processing
+### Single Image Processing (Standard UI)
 
 ```mermaid
 sequenceDiagram
@@ -167,6 +215,37 @@ sequenceDiagram
     opt Save Results
         UI->>Storage: Save to Output
     end
+```
+
+### Single Document Processing (Docling UI)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant DoclingUI
+    participant Combined
+    participant Docling
+    participant GutenOCR
+    participant Storage
+    
+    User->>DoclingUI: Upload Document
+    User->>DoclingUI: Select Processing Options
+    DoclingUI->>Combined: process_document()
+    
+    alt Extract Structure
+        Combined->>Docling: Extract Structure
+        Docling->>Combined: Structure Data
+    end
+    
+    alt Perform OCR
+        Combined->>GutenOCR: Process Image
+        GutenOCR->>Combined: OCR Results
+    end
+    
+    Combined->>Combined: Merge Results
+    Combined->>Storage: Save Combined Output
+    Combined->>DoclingUI: Return Results
+    DoclingUI->>User: Display Content
 ```
 
 ### Batch Processing
