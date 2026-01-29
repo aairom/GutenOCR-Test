@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gutenocr-cpu
+  labels:
+    app: gutenocr
+    version: cpu
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gutenocr
+      version: cpu
+  template:
+    metadata:
+      labels:
+        app: gutenocr
+        version: cpu
+    spec:
+      containers:
+      - name: gutenocr
+        image: gutenocr:cpu-latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 7860
+          name: http
+          protocol: TCP
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: GRADIO_SERVER_NAME
+          value: "0.0.0.0"
+        - name: GRADIO_SERVER_PORT
+          value: "7860"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        volumeMounts:
+        - name: input-volume
+          mountPath: /app/input
+        - name: output-volume
+          mountPath: /app/output
+        - name: model-cache
+          mountPath: /root/.cache/huggingface
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 7860
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 7860
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: input-volume
+        persistentVolumeClaim:
+          claimName: gutenocr-input-pvc
+      - name: output-volume
+        persistentVolumeClaim:
+          claimName: gutenocr-output-pvc
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: gutenocr-model-cache-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gutenocr-cpu-service
+  labels:
+    app: gutenocr
+    version: cpu
+spec:
+  type: LoadBalancer
+  selector:
+    app: gutenocr
+    version: cpu
+  ports:
+  - port: 80
+    targetPort: 7860
+    protocol: TCP
+    name: http
+  sessionAffinity: ClientIP
+
+# Made with Bob

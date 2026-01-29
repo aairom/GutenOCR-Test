@@ -1,0 +1,33 @@
+# Core dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.40.0
+pillow>=10.0.0
+qwen-vl-utils>=0.0.11
+
+# OCR and Document Processing
+docling>=1.0.0
+docling-core>=1.0.0
+
+# UI Framework
+gradio>=4.0.0
+streamlit>=1.28.0
+
+# Utilities
+numpy>=1.24.0
+pandas>=2.0.0
+tqdm>=4.65.0
+python-dateutil>=2.8.2
+pyyaml>=6.0
+
+# Image processing
+opencv-python>=4.8.0
+pdf2image>=1.16.3
+
+# Optional: For better performance
+accelerate>=0.24.0
+
+# Development
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0

@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gutenocr-ingress
+  labels:
+    app: gutenocr
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - gutenocr.example.com
+    secretName: gutenocr-tls
+  rules:
+  - host: gutenocr.example.com
+    http:
+      paths:
+      - path: /cpu
+        pathType: Prefix
+        backend:
+          service:
+            name: gutenocr-cpu-service
+            port:
+              number: 80
+      - path: /gpu
+        pathType: Prefix
+        backend:
+          service:
+            name: gutenocr-gpu-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gutenocr-cpu-service
+            port:
+              number: 80
+
+# Made with Bob

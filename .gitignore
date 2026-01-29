@@ -1,0 +1,71 @@
+# Folders starting with underscore
+_*/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+output/*
+!output/.gitkeep
+*.log
+
+# Model files (too large for git)
+*.bin
+*.safetensors
+*.ckpt
+*.pth
+
+# Environment
+.env
+.env.local
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+temp/
+tmp/

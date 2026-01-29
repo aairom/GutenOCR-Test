@@ -1,0 +1,44 @@
+# Persistent Volume Claims for GutenOCR
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gutenocr-input-pvc
+  labels:
+    app: gutenocr
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gutenocr-output-pvc
+  labels:
+    app: gutenocr
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gutenocr-model-cache-pvc
+  labels:
+    app: gutenocr
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: standard
+
+# Made with Bob

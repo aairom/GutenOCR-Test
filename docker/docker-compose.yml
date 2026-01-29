@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # GutenOCR CPU version
+  gutenocr-cpu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gutenocr
+    container_name: gutenocr-cpu
+    ports:
+      - "7860:7860"
+    volumes:
+      - ../input:/app/input
+      - ../output:/app/output
+      - gutenocr-models:/root/.cache/huggingface
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=7860
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # GutenOCR GPU version
+  gutenocr-gpu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gutenocr-gpu
+    container_name: gutenocr-gpu
+    ports:
+      - "7861:7860"
+    volumes:
+      - ../input:/app/input
+      - ../output:/app/output
+      - gutenocr-models:/root/.cache/huggingface
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=7860
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Combined Docling + GutenOCR
+  combined-processor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.combined
+    container_name: combined-processor
+    volumes:
+      - ../input:/app/input
+      - ../output:/app/output
+      - gutenocr-models:/root/.cache/huggingface
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: "no"
+    profiles:
+      - batch
+
+volumes:
+  gutenocr-models:
+    driver: local
+
+networks:
+  default:
+    name: gutenocr-network
+
+# Made with Bob
