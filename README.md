@@ -53,7 +53,7 @@ A comprehensive OCR application powered by GutenOCR Vision Language Models with 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/GutenOCR-Test.git
+git clone https://github.com/aairom/GutenOCR-Test.git
 cd GutenOCR-Test
 ```
 
